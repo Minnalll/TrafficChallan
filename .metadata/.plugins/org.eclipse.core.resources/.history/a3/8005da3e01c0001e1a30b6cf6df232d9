@@ -1,0 +1,5 @@
+package com.maveric.streambasics.model;
+
+public class ChallanGenerator {
+
+}

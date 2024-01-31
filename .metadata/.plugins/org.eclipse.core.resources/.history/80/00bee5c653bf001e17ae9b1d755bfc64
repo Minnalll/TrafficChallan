@@ -1,0 +1,58 @@
+package com.vehiclechallan.service;
+
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Properties;
+
+	public class ChallanGenerator {
+
+	    public static void main(String[] args) {
+	        // Set up Kafka consumer properties
+	        Properties props = new Properties();
+	        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "your_bootstrap_servers");
+	        props.put(ConsumerConfig.GROUP_ID_CONFIG, "challan-consumer-group");
+	        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+	        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+	        // Create Kafka consumer
+	        Consumer<String, String> consumer = new KafkaConsumer<>(props);
+
+	        // Subscribe to the vehicleOverSpeed topic
+	        consumer.subscribe(Collections.singletonList("vehicleOverSpeed"));
+
+	        // Map to store vehicle counts
+	        Map<String, Integer> vehicleCounts = new HashMap<>();
+
+	        // Poll for messages
+	        while (true) {
+	            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+
+	            records.forEach(record -> {
+	                String vehicleNumber = record.key();
+
+	                // Update the count for the vehicle
+	                vehicleCounts.put(vehicleNumber, vehicleCounts.getOrDefault(vehicleNumber, 0) + 1);
+
+	                // Check if count is more than 3, generate challan
+	                if (vehicleCounts.get(vehicleNumber) > 3) {
+	                    generateChallan(vehicleNumber);
+	                }
+	            });
+	        }
+	    }
+
+	    private static void generateChallan(String vehicleNumber) {
+	        // Logic to generate a challan for the specified vehicle number
+	        System.out.println("Challan generated for vehicle: " + vehicleNumber);
+	    }
+	}
+
+
+	}
+

@@ -1,0 +1,5 @@
+package com.vehicleoverspeed.model;
+
+public class VehicleOverSpeed {
+
+}

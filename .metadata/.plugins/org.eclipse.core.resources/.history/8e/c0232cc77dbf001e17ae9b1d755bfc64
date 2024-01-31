@@ -1,0 +1,62 @@
+package com.vehiclechallan.service;
+
+import java.util.Collections;
+import java.util.Properties;
+
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.KGroupedStream;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.KTable;
+import org.springframework.context.annotation.ComponentScan;
+
+@ComponentScan
+public class ChallanGenerator {
+
+	public void ChallanGen () throws InterruptedException {
+		// Set up Kafka consumer properties
+		Properties props = new Properties();
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.put(ConsumerConfig.GROUP_ID_CONFIG, "challan-consumer-group");
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		System.out.println("After Config");
+		// Create Kafka consumer
+		Consumer<String, String> consumer = new KafkaConsumer<>(props);
+		System.out.println("Props Config");
+		// Subscribe to the vehicleOverSpeed topic
+		consumer.subscribe(Collections.singletonList("vehicleOverSpeedTopic"));
+		System.out.println("Topic Subscription");
+		
+		 StreamsBuilder builder = new StreamsBuilder();
+	        //source processor giving us stream from topic csv
+	        KStream<String, String> inputStream = builder.stream("stream-input");
+	        KGroupedStream<String,String>groupedStream=inputStream.groupByKey();
+	        KTable<String,Long>countTable=groupedStream.count();
+	        KStream<String,Long>outStream=countTable.toStream();
+	        outStream.peek((key,value)-> System.out.println("outstream peek, key="+key+" count="+value))
+	                .to("messages-key-count");
+
+	        Topology topology = builder.build();
+//	        Log.info("topology" + topology.describe());
+
+	        try (KafkaStreams kafkaStreams = new KafkaStreams(topology, props)) {
+	            kafkaStreams.start();
+	            //  while (stop) {
+	            Thread.sleep(Long.MAX_VALUE);
+	            // }
+	            kafkaStreams.close();
+	        }
+
+	        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//	            sysout("*** application closed");
+	        	System.out.println("Application Closed !!!");
+
+	        }));
+}
+}

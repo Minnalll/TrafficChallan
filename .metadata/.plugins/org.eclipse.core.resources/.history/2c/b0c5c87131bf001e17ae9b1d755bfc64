@@ -1,0 +1,5 @@
+package com.vehicleoverspeed.controller;
+
+public class VehicleOverSpeedProducerService {
+
+}
